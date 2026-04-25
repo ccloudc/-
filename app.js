@@ -343,7 +343,7 @@ class DailyDashboard {
                 <div class="item-date">${b.month}/${b.day}${b.type === 'lunar' ? '(農)' : ''}</div>
                 <div class="item-content">
                     <h4>${b.name} (${b.target.getFullYear() - b.birthYear}歲)</h4>
-                    <p>${b.relation} • 倒數 ${b.diff} 天</p>
+                    <p>倒數 ${b.diff} 天</p>
                 </div>
             `;
             li.onclick = (e) => { e.stopPropagation(); this.openBirthdayModal(b); };
@@ -481,15 +481,14 @@ class DailyDashboard {
         
         body.innerHTML = `
             <div class="form-group"><label>姓名</label><input id="b-name" value="${data?.name || ''}"></div>
-            <div class="form-group"><label>關係</label><input id="b-relation" value="${data?.relation || ''}"></div>
             <div class="form-group"><label>類型</label>
                 <select id="b-type"><option value="solar" ${data?.type === 'solar' ? 'selected' : ''}>國曆</option>
                 <option value="lunar" ${data?.type === 'lunar' ? 'selected' : ''}>農曆</option></select>
             </div>
             <div style="display:flex; gap:10px;">
-                <div class="form-group"><label>西元出生年</label><input type="number" id="b-year" value="${data?.birthYear || 1990}"></div>
-                <div class="form-group"><label>月</label><input type="number" id="b-month" value="${data?.month || 1}"></div>
-                <div class="form-group"><label>日</label><input type="number" id="b-day" value="${data?.day || 1}"></div>
+                <div class="form-group" style="flex:2;"><label>西元出生年</label><input type="number" id="b-year" value="${data?.birthYear || 1990}"></div>
+                <div class="form-group" style="flex:1;"><label>月</label><input type="number" id="b-month" value="${data?.month || 1}"></div>
+                <div class="form-group" style="flex:1;"><label>日</label><input type="number" id="b-day" value="${data?.day || 1}"></div>
             </div>
             <input type="hidden" id="b-id" value="${data?.id || ''}">
             <input type="hidden" id="entry-type" value="birthday">
