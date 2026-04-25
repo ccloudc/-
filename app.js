@@ -28,7 +28,16 @@ class DailyDashboard {
     }
 
     initConfiguration() {
-        // 先嘗試從本地儲存 (localStorage) 讀取，方便在 GitHub Pages 上使用
+        // 安全檢查：如果 config.js 沒被載入 (通常在 GitHub Pages 上)，手動初始化 CONFIG
+        if (typeof CONFIG === 'undefined') {
+            window.CONFIG = {
+                API_URL: "",
+                SECRET_TOKEN: "",
+                EDIT_PASSWORD: ""
+            };
+        }
+
+        // 先嘗試從本地儲存 (localStorage) 讀取
         const savedApi = localStorage.getItem('DASHBOARD_API_URL');
         const savedToken = localStorage.getItem('DASHBOARD_SECRET_TOKEN');
         const savedPwd = localStorage.getItem('DASHBOARD_EDIT_PASSWORD');
