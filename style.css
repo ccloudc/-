@@ -124,11 +124,12 @@ header {
 .label-container {
     display: flex;
     flex-direction: row;
-    flex-wrap: wrap;
+    flex-wrap: nowrap; /* 手機版不換行，改用省略號 */
     justify-content: center;
-    gap: 4px;
+    gap: 2px;
     margin-top: auto;
     width: 100%;
+    overflow: hidden;
 }
 
 
@@ -192,17 +193,20 @@ header {
 .day {
     padding: 12px 5px;
     border-radius: 12px;
-    font-size: 1.2rem; /* 日期字體變大 */
+    font-size: 1.2rem;
     font-weight: 600;
     cursor: default;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: flex-start;
-    min-height: 100px; /* 增加最小高度 */
+    min-height: 100px;
     height: auto;
     background: rgba(255, 255, 255, 0.3);
     border: 1px solid transparent;
+    overflow: hidden; /* 防止內容撐開格子 */
+    box-sizing: border-box;
+    width: 100%;
 }
 
 .day.today {
@@ -733,12 +737,22 @@ header {
         gap: 4px;
     }
     .day {
-        min-height: 80px;
-        padding: 8px 2px;
-        border-radius: 8px;
+        min-height: 70px; /* 稍微縮小最小高度 */
+        padding: 5px 2px;
+    }
+    .label-container {
+        transform: scale(0.85); /* 縮小標籤容器 */
+        transform-origin: bottom center;
     }
     .day > span:first-child {
-        font-size: 1rem;
+        font-size: 0.9rem;
+    }
+    .holiday-label {
+        font-size: 0.55rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 95%;
     }
     .lunar-day {
         font-size: 0.6rem;
