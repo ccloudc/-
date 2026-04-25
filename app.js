@@ -16,6 +16,7 @@ const LUNAR_HOLIDAYS = [
 
 class DailyDashboard {
     constructor() {
+        this.initConfiguration();
         this.birthdays = [];
         this.todos = [];
         this.pickup = [];
@@ -24,6 +25,36 @@ class DailyDashboard {
         
         if (document.readyState === 'complete' || document.readyState === 'interactive') { this.init(); } 
         else { document.addEventListener('DOMContentLoaded', () => this.init()); }
+    }
+
+    initConfiguration() {
+        // 先嘗試從本地儲存 (localStorage) 讀取，方便在 GitHub Pages 上使用
+        const savedApi = localStorage.getItem('DASHBOARD_API_URL');
+        const savedToken = localStorage.getItem('DASHBOARD_SECRET_TOKEN');
+        const savedPwd = localStorage.getItem('DASHBOARD_EDIT_PASSWORD');
+
+        if (savedApi) CONFIG.API_URL = savedApi;
+        if (savedToken) CONFIG.SECRET_TOKEN = savedToken;
+        if (savedPwd) CONFIG.EDIT_PASSWORD = savedPwd;
+
+        // 如果連基本的 API 網址都沒有 (通常是 GitHub Pages 環境)
+        if (!CONFIG.API_URL || CONFIG.API_URL.includes("你的網址")) {
+            const url = prompt("檢測到尚未配置連接資訊。\n請輸入您的 Google Apps Script 部署網址 (API_URL):", "");
+            if (url) {
+                localStorage.setItem('DASHBOARD_API_URL', url);
+                CONFIG.API_URL = url;
+            }
+            const token = prompt("請輸入您的 SECRET_TOKEN (GAS 安全金鑰):", "");
+            if (token) {
+                localStorage.setItem('DASHBOARD_SECRET_TOKEN', token);
+                CONFIG.SECRET_TOKEN = token;
+            }
+            const pwd = prompt("請輸入您的 EDIT_PASSWORD (編輯密碼):", "");
+            if (pwd) {
+                localStorage.setItem('DASHBOARD_EDIT_PASSWORD', pwd);
+                CONFIG.EDIT_PASSWORD = pwd;
+            }
+        }
     }
 
     async init() {
