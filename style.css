@@ -532,8 +532,8 @@ header {
     backdrop-filter: blur(20px);
     border-radius: 28px;
     width: 95%;
-    max-width: 800px; /* 從 650px 增加到 800px */
-    padding: 40px; 
+    max-width: 850px; 
+    padding: 30px; /* 從 40px 略微縮減，增加內容空間 */
     box-shadow: 0 25px 60px rgba(0,0,0,0.25);
     position: relative;
     border: 1px solid rgba(255,255,255,0.4);
@@ -607,14 +607,14 @@ header {
 
 .modal-task-row {
     display: grid;
-    grid-template-columns: 140px 1fr 180px;
+    grid-template-columns: minmax(100px, 1.2fr) minmax(120px, 2fr) minmax(120px, 1.5fr);
     grid-template-areas: 
         "area1 area2 area3"
         "area4 area4 area5";
-    gap: 20px;
+    gap: 15px; /* 從 20px 略微縮減 */
     background: white;
-    padding: 25px;
-    border-radius: 24px;
+    padding: 20px;
+    border-radius: 20px;
     border: 1px solid #eef0f2;
     position: relative;
     margin-bottom: 20px;
@@ -720,13 +720,30 @@ header {
 .btn-danger { background: #ff7675; color: white; }
 .btn-danger:hover { opacity: 0.9; transform: translateY(-2px); }
 
+/* 生日編輯排版 */
+.birthday-inputs-row {
+    display: flex;
+    gap: 15px;
+    width: 100%;
+}
+.birth-year-field { flex: 2; }
+.birth-month-field { flex: 1; }
+.birth-day-field { flex: 1; }
+
+@media (max-width: 500px) {
+    .birthday-inputs-row {
+        flex-direction: column;
+        gap: 0;
+    }
+}
+
 /* Animation Overrides */
 @keyframes fadeIn {
     from { opacity: 0; }
     to { opacity: 1; }
 }
 
-@media (max-width: 600px) {
+@media (max-width: 768px) {
     #digital-clock { font-size: 3rem; }
     .main-grid { 
         grid-template-columns: 1fr; 
@@ -737,11 +754,11 @@ header {
         gap: 4px;
     }
     .day {
-        min-height: 70px; /* 稍微縮小最小高度 */
+        min-height: 70px;
         padding: 5px 2px;
     }
     .label-container {
-        transform: scale(0.85); /* 縮小標籤容器 */
+        transform: scale(0.85);
         transform-origin: bottom center;
     }
     .day > span:first-child {
@@ -757,10 +774,6 @@ header {
     .lunar-day {
         font-size: 0.6rem;
     }
-    .holiday-label {
-        font-size: 0.6rem;
-        word-break: break-all;
-    }
     .birthday-label, .task-label, .pickup-label {
         font-size: 0.6rem;
         padding: 1px 4px;
@@ -774,5 +787,61 @@ header {
     }
     .calendar-widget {
         padding: 10px;
+    }
+
+    /* Mobile Modal Rows - 強制垂直堆疊防止變形 */
+    .modal-container {
+        padding: 20px 15px;
+        border-radius: 20px;
+        width: 98%;
+    }
+    .modal-task-row {
+        display: flex !important; /* 強制覆蓋 Grid */
+        flex-direction: column !important;
+        gap: 8px;
+        padding: 15px;
+        border: 1px solid #eee;
+        border-radius: 16px;
+    }
+    .modal-task-row .form-group {
+        width: 100%;
+        margin-bottom: 5px;
+    }
+    /* 移除 Grid 區域限制 */
+    .modal-task-row .field-1, 
+    .modal-task-row .field-2, 
+    .modal-task-row .field-3, 
+    .modal-task-row .field-4, 
+    .modal-task-row .field-5 {
+        grid-area: auto !important;
+    }
+    
+    .item-delete-btn {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        width: 30px;
+        height: 30px;
+        font-size: 1rem;
+    }
+    .tabs-header {
+        width: calc(100% + 30px);
+        margin: -20px -15px 15px -15px;
+        border-radius: 20px 20px 0 0;
+    }
+    .tab-btn {
+        padding: 12px 5px;
+        font-size: 0.9rem;
+    }
+    .modal-footer {
+        flex-direction: column-reverse;
+        padding-top: 15px;
+        margin-top: 15px;
+    }
+    .modal-footer .btn-primary, .modal-footer .btn-danger {
+        width: 100%;
+    }
+    .modal-footer .spacer {
+        display: none;
     }
 }

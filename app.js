@@ -479,16 +479,22 @@ class DailyDashboard {
         const title = document.getElementById('modal-title');
         title.textContent = data ? "編輯壽星" : "新增壽星";
         
+        // 重置儲存按鈕狀態，防止之前留下的禁用或讀取中狀態
+        const sBtn = document.getElementById('save-btn');
+        if (sBtn) { sBtn.textContent = "儲存"; sBtn.disabled = false; }
+        
         body.innerHTML = `
-            <div class="form-group"><label>姓名</label><input id="b-name" value="${data?.name || ''}"></div>
+            <div class="form-group"><label>姓名</label><input id="b-name" value="${data?.name || ''}" placeholder="請輸入姓名"></div>
             <div class="form-group"><label>類型</label>
-                <select id="b-type"><option value="solar" ${data?.type === 'solar' ? 'selected' : ''}>國曆</option>
-                <option value="lunar" ${data?.type === 'lunar' ? 'selected' : ''}>農曆</option></select>
+                <select id="b-type">
+                    <option value="solar" ${data?.type === 'solar' ? 'selected' : ''}>國曆</option>
+                    <option value="lunar" ${data?.type === 'lunar' ? 'selected' : ''}>農曆</option>
+                </select>
             </div>
-            <div style="display:flex; gap:10px;">
-                <div class="form-group" style="flex:2;"><label>西元出生年</label><input type="number" id="b-year" value="${data?.birthYear || 1990}"></div>
-                <div class="form-group" style="flex:1;"><label>月</label><input type="number" id="b-month" value="${data?.month || 1}"></div>
-                <div class="form-group" style="flex:1;"><label>日</label><input type="number" id="b-day" value="${data?.day || 1}"></div>
+            <div class="birthday-inputs-row">
+                <div class="form-group birth-year-field"><label>西元出生年</label><input type="number" id="b-year" value="${data?.birthYear || 1990}" min="1900" max="2100"></div>
+                <div class="form-group birth-month-field"><label>月</label><input type="number" id="b-month" value="${data?.month || 1}" min="1" max="12"></div>
+                <div class="form-group birth-day-field"><label>日</label><input type="number" id="b-day" value="${data?.day || 1}" min="1" max="31"></div>
             </div>
             <input type="hidden" id="b-id" value="${data?.id || ''}">
             <input type="hidden" id="entry-type" value="birthday">
@@ -695,14 +701,21 @@ class DailyDashboard {
         const type = document.getElementById('entry-type').value;
 
         if (type === 'birthday') {
+            const name = document.getElementById('b-name').value.trim();
+            const year = parseInt(document.getElementById('b-year').value);
+            const month = parseInt(document.getElementById('b-month').value);
+            const day = parseInt(document.getElementById('b-day').value);
+
+            if (!name) { alert("請輸入姓名"); return; }
+            if (isNaN(year) || isNaN(month) || isNaN(day)) { alert("請輸入正確的日期數字"); return; }
+
             const data = {
-                id: document.getElementById('b-id').value,
-                name: document.getElementById('b-name').value,
-                relation: document.getElementById('b-relation').value,
+                id: document.getElementById('b-id').value || Date.now().toString(),
+                name: name,
                 type: document.getElementById('b-type').value,
-                birthYear: parseInt(document.getElementById('b-year').value),
-                month: parseInt(document.getElementById('b-month').value),
-                day: parseInt(document.getElementById('b-day').value)
+                birthYear: year,
+                month: month,
+                day: day
             };
             await this.saveToCloud("Birthdays", data, pwd);
         } else if (type === 'date-override') {
