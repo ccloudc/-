@@ -1,0 +1,7 @@
+[
+    { "name": "王小明", "birthYear": 1990, "month": 4, "day": 15, "relation": "哥哥" },
+    { "name": "李美美", "birthYear": 1965, "month": 5, "day": 20, "relation": "媽媽" },
+    { "name": "張小強", "birthYear": 1992, "month": 6, "day": 1, "relation": "好友" },
+    { "name": "周大大", "birthYear": 1988, "month": 12, "day": 25, "relation": "堂姐" },
+    { "name": "陳老師", "birthYear": 1975, "month": 8, "day": 10, "relation": "恩師" }
+]

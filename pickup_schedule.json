@@ -1,0 +1,9 @@
+{
+    "1": { "morning": "07:30", "afternoon": "16:30", "note": "游泳課" },
+    "2": { "morning": "07:30", "afternoon": "16:00", "note": "" },
+    "3": { "morning": "07:30", "afternoon": "16:00", "note": "鋼琴課" },
+    "4": { "morning": "07:30", "afternoon": "18:00", "note": "延托" },
+    "5": { "morning": "07:30", "afternoon": "16:00", "note": "放假預備" },
+    "6": { "morning": "--", "afternoon": "--", "note": "週末休息" },
+    "0": { "morning": "--", "afternoon": "--", "note": "週末休息" }
+}
