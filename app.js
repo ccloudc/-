@@ -258,11 +258,11 @@ class DailyDashboard {
                 if (h) { const hl = document.createElement('span'); hl.className = 'holiday-label'; hl.textContent = h; el.appendChild(hl); }
             }
 
-            // Create a container for horizontal labels (Task/Pickup)
+            // Create a container for horizontal labels (Birthday/Task/Pickup)
             const labelContainer = document.createElement('div');
             labelContainer.className = 'label-container';
 
-            // Birthday indicator (showing names)
+            // Birthday indicator
             const bdaysToday = this.birthdays.filter(b => {
                 if (b.type === 'solar' || !b.type) return (parseInt(b.month) === this.calMonth + 1 && parseInt(b.day) === i);
                 if (typeof Solar !== 'undefined') {
@@ -276,8 +276,8 @@ class DailyDashboard {
                 const names = bdaysToday.map(b => b.name).join(' ');
                 const bl = document.createElement('span'); 
                 bl.className = 'birthday-label'; 
-                bl.innerHTML = `🎂 ${names}`; 
-                el.appendChild(bl); 
+                bl.innerHTML = `<span>🎂</span><span class="birthday-name">${names}</span>`; 
+                labelContainer.appendChild(bl); 
             }
             
             // Task indicator

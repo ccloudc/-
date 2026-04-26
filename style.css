@@ -290,12 +290,12 @@ header {
     background: rgba(241, 196, 15, 0.1);
     color: #f39c12;
     border: 1px solid rgba(241, 196, 15, 0.3);
-    width: 90%;
     margin-top: 2px;
     font-weight: 700;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+}
+
+.birthday-name {
+    margin-left: 2px;
 }
 
 /* List Items (Birthdays & Holidays) */
@@ -777,6 +777,9 @@ header {
     .birthday-label, .task-label, .pickup-label {
         font-size: 0.6rem;
         padding: 1px 4px;
+    }
+    .birthday-name {
+        display: none;
     }
     .fasting-label {
         width: 16px;
