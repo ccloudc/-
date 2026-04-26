@@ -199,9 +199,10 @@ header {
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: flex-start;
+    justify-content: center; /* 改為居中，讓數字維持在中心 */
     min-height: 100px;
     height: auto;
+    position: relative; /* 確保絕對定位有效 */
     background: rgba(255, 255, 255, 0.3);
     border: 1px solid transparent;
     overflow: hidden; /* 防止內容撐開格子 */
@@ -217,24 +218,27 @@ header {
 }
 
 .lunar-day {
-    font-size: 0.8rem; /* 農曆字體變大 */
-    margin-top: 4px;
-    opacity: 0.8;
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    font-size: 0.75rem;
+    font-weight: 400;
+    opacity: 0.7;
 }
 
 .holiday-label {
     font-size: 0.75rem; /* 節日字體變大 */
     color: #e74c3c;
     font-weight: 800;
-    margin-top: 6px;
-    line-height: 1.2;
+    margin-top: 2px;
+    line-height: 1.1;
 }
 
 .birthday-label {
     font-size: 0.75rem; /* 生日字體變大 */
     color: #27ae60;
     font-weight: 800;
-    margin-top: 4px;
+    margin-top: 2px;
     background: rgba(39, 174, 96, 0.1);
     padding: 2px 6px;
     border-radius: 4px;
@@ -772,11 +776,14 @@ header {
         max-width: 95%;
     }
     .lunar-day {
-        font-size: 0.6rem;
+        font-size: 0.55rem;
+        top: 4px;
+        right: 4px;
     }
     .birthday-label, .task-label, .pickup-label {
-        font-size: 0.6rem;
-        padding: 1px 4px;
+        font-size: 0.55rem;
+        padding: 1px 3px;
+        gap: 1px;
     }
     .birthday-name {
         display: inline;
