@@ -212,7 +212,10 @@ class DailyDashboard {
             el.className = 'day clickable';
             if (dateStr === todayStr) el.classList.add('today');
             
-            el.innerHTML = `<span>${i}</span>`;
+            const header = document.createElement('div');
+            header.className = 'day-header';
+            header.innerHTML = `<span class="day-num">${i}</span>`;
+            el.appendChild(header);
             
             // Add Lunar and Labels
             if (typeof Solar !== 'undefined') {
@@ -220,7 +223,7 @@ class DailyDashboard {
                 const l = s.getLunar();
                 const lunarDayStr = l.getDay() === 1 ? l.getMonthInChinese() + '月' : l.getDayInChinese();
                 const lSpan = document.createElement('span'); lSpan.className = 'lunar-day'; lSpan.textContent = lunarDayStr;
-                el.appendChild(lSpan);
+                header.appendChild(lSpan);
 
                 // Holidays
                 let h = this.getHolidayAt(this.calYear, this.calMonth + 1, i);
@@ -238,7 +241,7 @@ class DailyDashboard {
                     const fl = document.createElement('span');
                     fl.className = 'fasting-label';
                     fl.textContent = "齋";
-                    el.appendChild(fl);
+                    header.prepend(fl); // 加在日期前面
                 }
                 
                 // Make-up holiday logic

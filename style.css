@@ -103,11 +103,11 @@ header {
 }
 
 .day {
-    aspect-ratio: 1 / 1;
+    aspect-ratio: 1 / 1.1;
     display: flex;
     flex-direction: column;
-    align-items: center;
-    padding: 8px 4px;
+    align-items: stretch;
+    padding: 8px 6px;
     border-radius: 12px;
     background: rgba(255, 255, 255, 0.4);
     border: 1px solid rgba(255, 255, 255, 0.3);
@@ -115,9 +115,9 @@ header {
     overflow: hidden;
 }
 
-.day > span:first-child {
+.day-num {
     font-weight: 800;
-    font-size: 1.1rem;
+    font-size: 1rem;
     color: var(--text-primary);
 }
 
@@ -191,23 +191,31 @@ header {
 }
 
 .day {
-    padding: 12px 5px;
+    padding: 8px 6px;
     border-radius: 12px;
-    font-size: 1.2rem;
+    font-size: 0.95rem;
     font-weight: 600;
     cursor: default;
     display: flex;
     flex-direction: column;
-    align-items: center;
-    justify-content: center; /* 改為居中，讓數字維持在中心 */
+    align-items: stretch;
+    justify-content: flex-start;
     min-height: 100px;
     height: auto;
-    position: relative; /* 確保絕對定位有效 */
+    position: relative;
     background: rgba(255, 255, 255, 0.3);
     border: 1px solid transparent;
-    overflow: hidden; /* 防止內容撐開格子 */
+    overflow: hidden;
     box-sizing: border-box;
     width: 100%;
+}
+
+.day-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 4px;
 }
 
 .day.today {
@@ -218,12 +226,10 @@ header {
 }
 
 .lunar-day {
-    position: absolute;
-    top: 8px;
-    right: 8px;
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     font-weight: 400;
-    opacity: 0.7;
+    opacity: 0.6;
+    color: var(--text-secondary);
 }
 
 .holiday-label {
@@ -256,21 +262,18 @@ header {
     text-overflow: ellipsis;
 }
 .fasting-label {
-    position: absolute;
-    top: 4px;
-    left: 4px;
-    font-size: 0.75rem;
+    font-size: 0.65rem;
     background: rgba(142, 68, 173, 0.15);
     color: #8e44ad;
-    width: 20px;
-    height: 20px;
+    width: 18px;
+    height: 18px;
     display: flex;
     align-items: center;
     justify-content: center;
     border-radius: 50%;
     font-weight: 800;
     border: 1px solid rgba(142, 68, 173, 0.3);
-    z-index: 2;
+    margin-right: 2px;
 }
 
 .task-label, .pickup-label {
@@ -765,35 +768,21 @@ header {
         transform: scale(0.85);
         transform-origin: bottom center;
     }
-    .day > span:first-child {
-        font-size: 0.9rem;
-    }
-    .holiday-label {
-        font-size: 0.55rem;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        max-width: 95%;
+    .day-num {
+        font-size: 0.85rem;
     }
     .lunar-day {
         font-size: 0.55rem;
-        top: 4px;
-        right: 4px;
     }
     .birthday-label, .task-label, .pickup-label {
         font-size: 0.55rem;
         padding: 1px 3px;
         gap: 1px;
     }
-    .birthday-name {
-        display: inline;
-    }
     .fasting-label {
-        width: 16px;
-        height: 16px;
-        font-size: 0.6rem;
-        top: 2px;
-        left: 2px;
+        width: 14px;
+        height: 14px;
+        font-size: 0.55rem;
     }
     .calendar-widget {
         padding: 10px;
