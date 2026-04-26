@@ -779,7 +779,7 @@ header {
         padding: 1px 4px;
     }
     .birthday-name {
-        display: none;
+        display: inline;
     }
     .fasting-label {
         width: 16px;

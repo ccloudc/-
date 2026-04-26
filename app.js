@@ -273,7 +273,7 @@ class DailyDashboard {
             });
             
             if (bdaysToday.length > 0) { 
-                const names = bdaysToday.map(b => b.name).join(' ');
+                const names = bdaysToday.map(b => b.name.slice(-1)).join('');
                 const bl = document.createElement('span'); 
                 bl.className = 'birthday-label'; 
                 bl.innerHTML = `<span>🎂</span><span class="birthday-name">${names}</span>`; 
