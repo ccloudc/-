@@ -1,17 +1,17 @@
 // 節慶與日程設定
 const SOLAR_HOLIDAYS = [
     { name: "元旦", month: 1, day: 1 }, { name: "和平紀念日", month: 2, day: 28 },
-    { name: "兒童節/清明節", month: 4, day: 4 }, { name: "勞動節", month: 5, day: 1 },
-    { name: "父親節", month: 8, day: 8 }, { name: "教師節", month: 9, day: 28 },
-    { name: "國慶日", month: 10, day: 10 }, { name: "台灣光復節", month: 10, day: 25 },
+    { name: "兒童/清明", month: 4, day: 4 }, { name: "勞動", month: 5, day: 1 },
+    { name: "父親", month: 8, day: 8 }, { name: "教師", month: 9, day: 28 },
+    { name: "國慶日", month: 10, day: 10 }, { name: "台灣光復", month: 10, day: 25 },
     { name: "跨年夜", month: 12, day: 31 }
 ];
 
 const LUNAR_HOLIDAYS = [
     { name: "春節", lMonth: 1, lDay: 1 }, { name: "初二", lMonth: 1, lDay: 2 },
     { name: "初三", lMonth: 1, lDay: 3 }, { name: "初四", lMonth: 1, lDay: 4 },
-    { name: "元宵節", lMonth: 1, lDay: 15 }, { name: "端午節", lMonth: 5, lDay: 5 },
-    { name: "中秋節", lMonth: 8, lDay: 15 }
+    { name: "元宵", lMonth: 1, lDay: 15 }, { name: "端午", lMonth: 5, lDay: 5 },
+    { name: "中秋", lMonth: 8, lDay: 15 }
 ];
 
 class DailyDashboard {
@@ -48,21 +48,40 @@ class DailyDashboard {
 
         // 如果連基本的 API 網址都沒有 (通常是 GitHub Pages 環境)
         if (!CONFIG.API_URL || CONFIG.API_URL.includes("你的網址")) {
-            const url = prompt("檢測到尚未配置連接資訊。\n請輸入您的 Google Apps Script 部署網址 (API_URL):", "");
-            if (url) {
-                localStorage.setItem('DASHBOARD_API_URL', url);
-                CONFIG.API_URL = url;
+            alert("歡迎使用！檢測到尚未配置連接資訊，請依照指示完成初次設定。");
+            
+            let url = "";
+            while (!url || !url.includes("https://script.google.com")) {
+                url = prompt("【第 1/3 步】\n請輸入您的 Google Apps Script 部署網址 (API_URL):\n(必須是 https://script.google.com 開頭的完整網址)", "");
+                if (url === null) return; // 使用者按取消，終止初始化
+                url = url.trim();
+                if (!url) alert("網址不能為空白！");
+                else if (!url.includes("https://script.google.com")) alert("請輸入正確的 Google Apps Script 部署網址格式。");
             }
-            const token = prompt("請輸入您的 SECRET_TOKEN (GAS 安全金鑰):", "");
-            if (token) {
-                localStorage.setItem('DASHBOARD_SECRET_TOKEN', token);
-                CONFIG.SECRET_TOKEN = token;
+            localStorage.setItem('DASHBOARD_API_URL', url);
+            CONFIG.API_URL = url;
+
+            let token = "";
+            while (!token) {
+                token = prompt("【第 2/3 步】\n請輸入您的 SECRET_TOKEN (GAS 安全金鑰):", "");
+                if (token === null) return;
+                token = token.trim();
+                if (!token) alert("金鑰不能為空白！");
             }
-            const pwd = prompt("請輸入您的 EDIT_PASSWORD (編輯密碼):", "");
-            if (pwd) {
-                localStorage.setItem('DASHBOARD_EDIT_PASSWORD', pwd);
-                CONFIG.EDIT_PASSWORD = pwd;
+            localStorage.setItem('DASHBOARD_SECRET_TOKEN', token);
+            CONFIG.SECRET_TOKEN = token;
+
+            let pwd = "";
+            while (!pwd) {
+                pwd = prompt("【第 3/3 步】\n請輸入您的 EDIT_PASSWORD (編輯密碼):", "");
+                if (pwd === null) return;
+                pwd = pwd.trim();
+                if (!pwd) alert("編輯密碼不能為空白！");
             }
+            localStorage.setItem('DASHBOARD_EDIT_PASSWORD', pwd);
+            CONFIG.EDIT_PASSWORD = pwd;
+            
+            alert("設定完成！頁面即將開始載入資料。");
         }
     }
 
@@ -83,6 +102,7 @@ class DailyDashboard {
         document.getElementById('prev-month')?.addEventListener('click', () => this.changeMonth(-1));
         document.getElementById('next-month')?.addEventListener('click', () => this.changeMonth(1));
         document.getElementById('add-birthday-btn')?.addEventListener('click', () => this.openBirthdayModal());
+        document.getElementById('manage-birthdays-btn')?.addEventListener('click', () => this.openBirthdayManagementModal());
         document.getElementById('close-modal')?.addEventListener('click', () => this.closeModal());
         document.getElementById('save-btn')?.addEventListener('click', () => this.handleSave());
         document.getElementById('delete-btn')?.addEventListener('click', () => this.handleDelete());
@@ -107,9 +127,9 @@ class DailyDashboard {
             const data = await response.json();
             if (data.error) throw new Error(data.error);
             
-            this.birthdays = data.birthdays || [];
-            this.todos = data.todos || [];
-            this.pickup = data.pickup || [];
+            this.birthdays = (data.birthdays || []).map(row => this.lowercaseKeys(row));
+            this.todos = (data.todos || []).map(row => this.lowercaseKeys(row));
+            this.pickup = (data.pickup || []).map(row => this.lowercaseKeys(row));
             console.log("Cloud data synced.");
         } catch (e) {
             console.error("Sync failed:", e);
@@ -165,6 +185,7 @@ class DailyDashboard {
         this.renderHolidays();
         this.renderPickup();
         this.renderTodos();
+        this.renderTomorrowTodos();
     }
 
     switchModalTab(tab) {
@@ -267,10 +288,12 @@ class DailyDashboard {
 
             // Birthday indicator
             const bdaysToday = this.birthdays.filter(b => {
-                if (b.type === 'solar' || !b.type) return (parseInt(b.month) === this.calMonth + 1 && parseInt(b.day) === i);
+                const bMonth = parseInt(b.month);
+                const bDay = parseInt(b.day);
+                if (b.type === 'solar' || !b.type) return (bMonth === this.calMonth + 1 && bDay === i);
                 if (typeof Solar !== 'undefined') {
                     const l = Solar.fromYmd(this.calYear, this.calMonth + 1, i).getLunar();
-                    return (parseInt(b.month) === l.getMonth() && parseInt(b.day) === l.getDay());
+                    return (bMonth === l.getMonth() && bDay === l.getDay());
                 }
                 return false;
             });
@@ -285,8 +308,15 @@ class DailyDashboard {
             
             // Task indicator
             const hasTask = this.todos.some(t => {
-                if (!t.date || !t.task) return false;
-                return this.isDateMatch(t.date, dateStr, t.repeat, t.endType, t.endValue, t.rangeUntil);
+                if (!t.date || t.task === undefined || t.task === null || t.task === '') return false;
+                const match = this.isDateMatch(t.date, dateStr, t.repeat, t.endtype, t.endvalue, t.rangeuntil, t.calendartype, t.reminderdays);
+                
+                // 強化偵錯：如果今天是該格日期，強制輸出結果
+                const todayStr = this.getLocalDateStr(new Date());
+                if (dateStr === todayStr) {
+                    console.log(`[今日比對] 任務: "${t.task}", 格子: ${dateStr}, 結果: ${match}`);
+                }
+                return match;
             });
             if (hasTask) {
                 const tl = document.createElement('span');
@@ -298,7 +328,7 @@ class DailyDashboard {
             // Pickup indicator
             const hasPickup = this.pickup.some(p => {
                 if (!p.date || !p.time) return false;
-                return this.isDateMatch(p.date, dateStr, p.repeat, p.endType, p.endValue, p.rangeUntil);
+                return this.isDateMatch(p.date, dateStr, p.repeat, p.endtype, p.endvalue, p.rangeuntil);
             });
             if (hasPickup) {
                 const pl = document.createElement('span');
@@ -345,7 +375,7 @@ class DailyDashboard {
             li.innerHTML = `
                 <div class="item-date">${b.month}/${b.day}${b.type === 'lunar' ? '(農)' : ''}</div>
                 <div class="item-content">
-                    <h4>${b.name} (${b.target.getFullYear() - b.birthYear}歲)</h4>
+                    <h4>${b.name} (${b.target.getFullYear() - b.birthyear}歲)</h4>
                     <p>倒數 ${b.diff} 天</p>
                 </div>
             `;
@@ -392,10 +422,13 @@ class DailyDashboard {
     renderTodos() {
         const list = document.getElementById('todo-list');
         if (!list) return;
-        const todayStr = this.formatDate(new Date());
+        const now = new Date();
+        const todayStr = this.formatDate(now);
+        
         const items = this.todos.filter(t => {
             if (!t.date) return false;
-            return this.isDateMatch(t.date, todayStr, t.repeat, t.endType, t.endValue, t.rangeUntil);
+            // 檢查是否符合日期規則 (包含提醒天數)
+            return this.isDateMatch(t.date, todayStr, t.repeat, t.endtype, t.endvalue, t.rangeuntil, t.calendartype, t.reminderdays);
         });
         list.innerHTML = '';
         
@@ -407,15 +440,132 @@ class DailyDashboard {
         items.forEach(t => {
             const li = document.createElement('li');
             li.className = 'todo-item';
-            li.style.padding = '10px 15px';
+            
+            // 判斷是否為「提前提醒」狀態
+            const isReminder = this.isReminderActive(t, now);
+            
             li.innerHTML = `
                 <div class="todo-text">
-                    ${(t.person || t.urgent) ? `<span class="person-tag">${t.person || t.urgent}</span>` : ''}
-                    ${t.task || ''}
+                    ${(t.person) ? `<span class="person-tag">${t.person}</span>` : ''}
+                    <span style="font-weight:700;">${t.task || ''}</span>
+                    ${isReminder && t.remindercontent ? `<div style="font-size:0.85rem; color:#d35400; margin-top:5px;">🔔 提醒：${t.remindercontent}</div>` : ''}
                 </div>
             `;
             list.appendChild(li);
         });
+    }
+
+    renderTomorrowTodos() {
+        const list = document.getElementById('tomorrow-todo-list');
+        if (!list) return;
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        const tomorrowStr = this.formatDate(tomorrow);
+        
+        const items = this.todos.filter(t => {
+            if (!t.date) return false;
+            return this.isDateMatch(t.date, tomorrowStr, t.repeat, t.endtype, t.endvalue, t.rangeuntil, t.calendartype, t.reminderdays);
+        });
+        list.innerHTML = '';
+        
+        if (items.length === 0) {
+            list.innerHTML = '<li class="todo-note" style="text-align:center; padding: 10px; color: grey;">明日尚無待辦事項</li>';
+            return;
+        }
+
+        items.forEach(t => {
+            const li = document.createElement('li');
+            li.className = 'todo-item';
+            
+            const isReminder = this.isReminderActive(t, tomorrow);
+            
+            li.innerHTML = `
+                <div class="todo-text">
+                    ${(t.person) ? `<span class="person-tag">${t.person}</span>` : ''}
+                    <span style="font-weight:700;">${t.task || ''}</span>
+                    ${isReminder && t.remindercontent ? `<div style="font-size:0.85rem; color:#d35400; margin-top:5px;">🔔 提醒：${t.remindercontent}</div>` : ''}
+                </div>
+            `;
+            list.appendChild(li);
+        });
+    }
+
+    // 判斷當前是否處於提醒期
+    isReminderActive(t, today) {
+        if (!t.reminderdays || t.reminderdays <= 0) return false;
+        
+        // 取得該任務在當前「目標日期」的國曆時間
+        const targetSolarDate = this.getNearestOccurrence(t, today);
+        if (!targetSolarDate) return false;
+
+        const diffTime = targetSolarDate - today;
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        
+        return diffDays > 0 && diffDays <= t.reminderdays;
+    }
+
+    // 取得任務最近的一次發生日期 (國曆 Date 物件)
+    getNearestOccurrence(t, baseDate) {
+        const dStart = this.parseLocalDate(t.date);
+        const y = baseDate.getFullYear();
+
+        if (t.repeat === 'yearly' || t.repeat === '每年') {
+            if (t.calendartype === 'lunar' && typeof Lunar !== 'undefined') {
+                // 農曆每年：計算當年的國曆日期
+                const lMonth = dStart.getMonth() + 1; // parseLocalDate 得到的月是 0-11
+                const lDay = dStart.getDate();
+                const s = Lunar.fromYmd(y, lMonth, lDay).getSolar();
+                let target = new Date(s.getYear(), s.getMonth() - 1, s.getDay());
+                // 如果已經過期太久，看明年
+                if (baseDate - target > 86400000) {
+                   const sNext = Lunar.fromYmd(y + 1, lMonth, lDay).getSolar();
+                   target = new Date(sNext.getYear(), sNext.getMonth() - 1, sNext.getDay());
+                }
+                return target;
+            } else {
+                // 國曆每年
+                let target = new Date(y, dStart.getMonth(), dStart.getDate());
+                if (baseDate - target > 86400000) target.setFullYear(y + 1);
+                return target;
+            }
+        }
+        
+        // 其他非每年重複的暫不複雜化計算，回傳原始日期或 null
+        return (t.repeat === 'none') ? dStart : null;
+    }
+
+    // 生日管理彈窗
+    openBirthdayManagementModal() {
+        const modal = document.getElementById('edit-modal');
+        const body = document.getElementById('modal-body');
+        const title = document.getElementById('modal-title');
+        title.textContent = "管理所有親友生日";
+        
+        document.getElementById('save-btn').style.display = 'none';
+        document.getElementById('delete-btn').style.display = 'none';
+
+        let listHtml = this.birthdays.map(b => `
+            <div class="manage-item">
+                <div class="manage-item-info">
+                    <strong style="font-size:1.1rem;">${b.name}</strong>
+                    <span style="color:var(--text-secondary); font-size:0.9rem;">
+                        ${b.type === 'lunar' ? '農曆' : '國曆'} ${b.month}/${b.day} (${b.birthyear}年)
+                    </span>
+                </div>
+                <div class="manage-item-actions">
+                    <button class="btn-small" onclick="app.openBirthdayModal(${JSON.stringify(b).replace(/"/g, '&quot;')})">編輯</button>
+                </div>
+            </div>
+        `).join('');
+
+        body.innerHTML = `
+            <div class="manage-list">
+                ${listHtml || '<p style="text-align:center; color:grey; padding:20px;">目前尚無資料</p>'}
+            </div>
+            <button class="add-task-line" style="margin-top:20px;" onclick="app.openBirthdayModal()">+ 新增壽星</button>
+        `;
+        
+        modal.style.display = 'flex';
     }
 
     renderHolidays() {
@@ -425,8 +575,11 @@ class DailyDashboard {
         const now = new Date();
         const futureHolidays = [];
 
-        // Check next 60 days
-        for (let i = 0; i < 60; i++) {
+        // Check next 365 days to ensure we find enough holidays
+        const seenNames = new Set();
+        for (let i = 0; i < 365; i++) {
+            if (futureHolidays.length >= 3) break; // Optimization: stop when we have 3
+            
             const d = new Date(now.getTime() + i * 86400000);
             const s = Solar.fromYmd(d.getFullYear(), d.getMonth() + 1, d.getDate());
             let h = this.getHolidayAt(s.getYear(), s.getMonth(), s.getDay());
@@ -445,13 +598,17 @@ class DailyDashboard {
             }
 
             if (h) {
-                const diff = Math.ceil((d.getTime() - now.getTime()) / 86400000);
-                futureHolidays.push({ name: h, m: s.getMonth(), d: s.getDay(), diff });
+                // Deduplicate same holiday (e.g. holiday and its makeup showing up)
+                const baseName = h.replace(" 補假", "");
+                if (!seenNames.has(baseName)) {
+                    seenNames.add(baseName);
+                    const diff = Math.ceil((d.getTime() - now.getTime()) / 86400000);
+                    futureHolidays.push({ name: h, m: s.getMonth(), d: s.getDay(), diff });
+                }
             }
         }
 
-        // De-duplicate same holiday (e.g. holiday and its makeup showing up)
-        // Actually showing both is fine if they are on different days.
+
         futureHolidays.slice(0, 3).forEach(x => {
             const li = document.createElement('li');
             li.className = 'info-item';
@@ -495,7 +652,7 @@ class DailyDashboard {
                 </select>
             </div>
             <div class="birthday-inputs-row">
-                <div class="form-group birth-year-field"><label>西元出生年</label><input type="number" id="b-year" value="${data?.birthYear || 1990}" min="1900" max="2100"></div>
+                <div class="form-group birth-year-field"><label>西元出生年</label><input type="number" id="b-year" value="${data?.birthyear || 1990}" min="1900" max="2100"></div>
                 <div class="form-group birth-month-field"><label>月</label><input type="number" id="b-month" value="${data?.month || 1}" min="1" max="12"></div>
                 <div class="form-group birth-day-field"><label>日</label><input type="number" id="b-day" value="${data?.day || 1}" min="1" max="31"></div>
             </div>
@@ -516,10 +673,10 @@ class DailyDashboard {
         const sBtn = document.getElementById('save-btn');
         if (sBtn) { sBtn.textContent = "儲存"; sBtn.disabled = false; }
 
-        const dayTodos = this.todos.filter(t => this.isDateMatch(t.date, dateStr, t.repeat, t.endType, t.endValue, t.rangeUntil));
-        const dayPickups = this.pickup.filter(p => this.isDateMatch(p.date, dateStr, p.repeat, p.endType, p.endValue, p.rangeUntil));
+        const dayTodos = this.todos.filter(t => this.isDateMatch(t.date, dateStr, t.repeat, t.endtype, t.endvalue, t.rangeuntil, t.calendartype, t.reminderdays));
+        const dayPickups = this.pickup.filter(p => this.isDateMatch(p.date, dateStr, p.repeat, p.endtype, p.endvalue, p.rangeuntil));
 
-        let tasksHtml = dayTodos.map(t => this.generateTaskRowHtml(t)).join('');
+        let tasksHtml = dayTodos.map(t => this.generateTaskRowHtml(t, dateStr)).join('');
         if (dayTodos.length === 0) tasksHtml = this.generateTaskRowHtml();
 
         let pickupsHtml = dayPickups.map(p => this.generatePickupRowHtml(p)).join('');
@@ -579,36 +736,68 @@ class DailyDashboard {
         modal.style.display = 'flex';
     }
 
-    generateTaskRowHtml(t = {id:'', person:'', task:'', repeat: 'none', endType: 'never', endValue: '', rangeUntil: ''}) {
+    generateTaskRowHtml(t = {id:'', person:'', task:'', repeat: 'none', calendartype: 'solar', reminderdays: 0, remindercontent: '', endtype: 'never', endvalue: '', rangeuntil: ''}, dateStr = null) {
         const rowId = t.id || 'new-' + Math.random().toString(36).substr(2, 9);
+        
+        // 判斷是否為提醒日顯示
+        let reminderBanner = '';
+        if (dateStr) {
+            const isReminder = this.isReminderActive(t, this.parseLocalDate(dateStr));
+            if (isReminder && t.remindercontent) {
+                reminderBanner = `<div class="reminder-highlight-banner">🔔 提醒內容：${t.remindercontent}</div>`;
+            }
+        }
+
         return `
             <div class="modal-task-row task-input-row" id="row-${rowId}">
+                ${reminderBanner}
                 <div class="form-group field-1"><label>人員</label><input class="row-person" value="${t.person || ''}" placeholder="誰?"></div>
-                <div class="form-group field-2"><label>任務</label><input class="row-task" value="${t.task || ''}" placeholder="要做什麼?"></div>
-                <div class="form-group field-3"><label>重複</label>
-                    <select class="row-repeat" onchange="app.toggleRecurrenceDetails('${rowId}')">
-                        <option value="none" ${t.repeat === 'none' ? 'selected' : ''}>不重複</option>
-                        <option value="daily" ${t.repeat === 'daily' || t.repeat === '每天' ? 'selected' : ''}>每天</option>
-                        <option value="weekly" ${t.repeat === 'weekly' || t.repeat === '每週' ? 'selected' : ''}>每週</option>
-                        <option value="monthly" ${t.repeat === 'monthly' || t.repeat === '每月' ? 'selected' : ''}>每月</option>
-                    </select>
+                <div class="form-group field-2"><label>任務標題</label><input class="row-task" value="${t.task || ''}" placeholder="要做什麼?"></div>
+                <div class="form-group field-3"><label>連續顯示至 (期間)</label><input type="date" class="row-range-until" value="${t.rangeuntil || ''}"></div>
+
+                <!-- 曆法與提醒設定區塊 -->
+                <div class="task-options-row">
+                    <div class="form-group">
+                        <label>曆法</label>
+                        <select class="row-calendar-type">
+                            <option value="solar" ${t.calendartype === 'solar' ? 'selected' : ''}>國曆</option>
+                            <option value="lunar" ${t.calendartype === 'lunar' ? 'selected' : ''}>農曆</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>提前提醒 (天)</label>
+                        <input type="number" class="row-reminder-days" value="${t.reminderdays || 0}" min="0" placeholder="0 = 當天">
+                    </div>
+                    <div class="form-group" style="flex: 2;">
+                        <label>提醒內容</label>
+                        <input class="row-reminder-content" value="${t.remindercontent || ''}" placeholder="例：記得買禮物">
+                    </div>
                 </div>
                 
                 <div class="form-group field-4" style="display:flex; gap:15px; flex-direction:column;">
-                    <div><label>截止日期 (期間)</label><input type="date" class="row-range-until" value="${t.rangeUntil || ''}" style="width: 200px;"></div>
+                    <div style="width: 150px;">
+                        <label>重複週期</label>
+                        <select class="row-repeat" onchange="app.toggleRecurrenceDetails('${rowId}')">
+                            <option value="none" ${t.repeat === 'none' ? 'selected' : ''}>不重複</option>
+                            <option value="daily" ${t.repeat === 'daily' || t.repeat === '每天' ? 'selected' : ''}>每天</option>
+                            <option value="weekly" ${t.repeat === 'weekly' || t.repeat === '每週' ? 'selected' : ''}>每週</option>
+                            <option value="monthly" ${t.repeat === 'monthly' || t.repeat === '每月' ? 'selected' : ''}>每月</option>
+                            <option value="yearly" ${t.repeat === 'yearly' || t.repeat === '每年' ? 'selected' : ''}>每年</option>
+                        </select>
+                    </div>
                     
                     <div class="recurrence-details" id="rec-${rowId}" style="display: ${t.repeat && t.repeat !== 'none' ? 'block' : 'none'}; border-top: 1px dashed #eee; padding-top: 10px;">
                         <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap; font-size: 0.85rem;">
                             <label style="display: flex; align-items: center; gap: 5px; cursor: pointer; font-weight:normal;">
-                                <input type="radio" name="endType-${rowId}" class="row-end-type" value="never" ${t.endType === 'never' || !t.endType ? 'checked' : ''}> 持續不停
+                                <input type="radio" name="endType-${rowId}" class="row-end-type" value="never" ${t.endtype === 'never' || !t.endtype ? 'checked' : ''}> 持續不停
                             </label>
                             <label style="display: flex; align-items: center; gap: 5px; cursor: pointer; font-weight:normal;">
-                                <input type="radio" name="endType-${rowId}" class="row-end-type" value="date" ${t.endType === 'date' ? 'checked' : ''}> 於
-                                <input type="date" class="row-end-date" value="${t.endType === 'date' ? t.endValue : ''}" style="width: 130px; padding: 2px 5px;">
+                                <input type="radio" name="endType-${rowId}" class="row-end-type" value="date" ${t.endtype === 'date' ? 'checked' : ''}> 重複結束於
+                                <input type="date" class="row-end-date" value="${t.endtype === 'date' ? t.endvalue : ''}" style="width: 130px; padding: 2px 5px;">
                             </label>
                             <label style="display: flex; align-items: center; gap: 5px; cursor: pointer; font-weight:normal;">
-                                <input type="radio" name="endType-${rowId}" class="row-end-type" value="count" ${t.endType === 'count' ? 'checked' : ''}> 重複
-                                <input type="number" class="row-end-count" value="${t.endType === 'count' ? t.endValue : '10'}" style="width: 45px; padding: 2px 5px;"> 次
+                                <input type="radio" name="endType-${rowId}" class="row-end-type" value="count" ${t.endtype === 'count' ? 'checked' : ''}> 重複
+                                <input type="number" class="row-end-count" value="${t.endtype === 'count' ? t.endvalue : '10'}" style="width: 45px; padding: 2px 5px;"> 次
                             </label>
                         </div>
                     </div>
@@ -700,6 +889,11 @@ class DailyDashboard {
     }
 
     async handleSave() {
+        const btn = document.getElementById('save-btn');
+        const originalText = btn.textContent;
+        btn.textContent = "傳送中...";
+        btn.disabled = true;
+
         const pwd = CONFIG.EDIT_PASSWORD || CONFIG.SECRET_TOKEN;
         const type = document.getElementById('entry-type').value;
 
@@ -732,8 +926,13 @@ class DailyDashboard {
                 const tPerson = row.querySelector('.row-person').value;
                 const tRepeat = row.querySelector('.row-repeat').value;
                 const tRangeUntil = row.querySelector('.row-range-until').value;
-                const tId = row.querySelector('.row-id').value;
+                const tId = row.querySelector('.row-id').value || "task-" + Date.now() + Math.random().toString(36).substr(2, 5);
                 
+                // 新增欄位
+                const tCalendarType = row.querySelector('.row-calendar-type').value;
+                const tReminderDays = parseInt(row.querySelector('.row-reminder-days').value) || 0;
+                const tReminderContent = row.querySelector('.row-reminder-content').value;
+
                 let tEndType = 'never';
                 let tEndValue = '';
                 if (tRepeat !== 'none') {
@@ -744,12 +943,17 @@ class DailyDashboard {
                 }
 
                 if (tTask) {
-                    promises.push(this.saveToCloud("Todos", { 
+                    const taskData = { 
                         id: tId, date: date, task: tTask, person: tPerson, 
                         repeat: tRepeat, endType: tEndType, endValue: tEndValue,
                         rangeUntil: tRangeUntil,
+                        calendarType: tCalendarType,
+                        reminderDays: tReminderDays,
+                        reminderContent: tReminderContent,
                         completed: 'FALSE' 
-                    }, pwd, "update", false));
+                    };
+                    console.log("Sending Task Data:", taskData);
+                    promises.push(this.saveToCloud("Todos", taskData, pwd, "update", false));
                     await new Promise(r => setTimeout(r, 150));
                 }
             }
@@ -858,62 +1062,103 @@ class DailyDashboard {
         return timeStr;
     }
 
-    // 改良版比對函式：支援每天、每週、每月重複，且支援結束條件與期間(Range)
-    isDateMatch(itemDate, targetDateStr, repeatType, endType, endValue, rangeUntil) {
+    // 改良版比對函式：支援每天、每週、每月、每年重複，且支援農曆與提前提醒
+    isDateMatch(itemDate, targetDateStr, repeatType, endType, endValue, rangeUntil, calendarType = 'solar', reminderDays = 0) {
         if (!itemDate || !targetDateStr) return false;
         
         const d1 = this.parseLocalDate(itemDate);
         const d2 = this.parseLocalDate(targetDateStr);
-        if (!d1 || !d2) return false;
+        if (!d1 || !d2 || isNaN(d1.getTime()) || isNaN(d2.getTime())) return false;
         
-        // 如果目標日期在起始日期之前，不匹配
-        if (d2 < d1) return false;
+        // 正規化日期
+        d1.setHours(0,0,0,0);
+        d2.setHours(0,0,0,0);
+        
+        const repeat = String(repeatType || 'none').toLowerCase().trim();
+        const s1 = this.getLocalDateStr(d1);
+        const s2 = this.getLocalDateStr(d2);
+
+        // 基本比對 (包含提前提醒)
+        const checkMatch = (taskSolarDate, targetSolarDate) => {
+            taskSolarDate.setHours(0,0,0,0);
+            targetSolarDate.setHours(0,0,0,0);
+            // 當天匹配
+            if (this.getLocalDateStr(taskSolarDate) === this.getLocalDateStr(targetSolarDate)) return true;
+            
+            // 提醒比對：只在「剛好」那一天提醒，不連續提醒
+            if (reminderDays > 0) {
+                const diffTime = taskSolarDate - targetSolarDate;
+                const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+                // 使用 Math.round 避免浮點數誤差，只比對剛好那一天
+                return diffDays === reminderDays;
+            }
+            return false;
+        };
 
         // --- 期間檢查 (Range Check) ---
-        if (rangeUntil) {
+        if (rangeUntil && rangeUntil.length > 5) {
             const dRangeEnd = this.parseLocalDate(rangeUntil);
-            if (d2 >= d1 && d2 <= dRangeEnd) return true;
+            if (!isNaN(dRangeEnd.getTime())) {
+                dRangeEnd.setHours(0,0,0,0);
+                if (d2 >= d1 && d2 <= dRangeEnd) return true;
+            }
         }
 
         // --- 結束條件檢查 ---
-        if (repeatType && repeatType !== 'none') {
+        if (repeat !== 'none' && calendarType === 'solar') {
             if (endType === 'date' && endValue) {
                 const dEnd = this.parseLocalDate(endValue);
-                if (d2 > dEnd) return false;
+                if (!isNaN(dEnd.getTime())) {
+                    dEnd.setHours(0,0,0,0);
+                    if (d2 > dEnd) return false;
+                }
             } else if (endType === 'count' && endValue) {
                 const count = parseInt(endValue);
-                if (repeatType === 'daily' || repeatType === '每天') {
+                if (repeat === 'daily' || repeat === '每天') {
                     const diffDays = Math.floor((d2 - d1) / (24 * 60 * 60 * 1000));
                     if (diffDays >= count) return false;
-                } else if (repeatType === 'weekly' || repeatType === '每週') {
+                } else if (repeat === 'weekly' || repeat === '每週') {
                     const diffDays = Math.floor((d2 - d1) / (24 * 60 * 60 * 1000));
                     const diffWeeks = Math.floor(diffDays / 7);
                     if (diffWeeks >= count) return false;
-                } else if (repeatType === 'monthly' || repeatType === '每月') {
+                } else if (repeat === 'monthly' || repeat === '每月') {
                     const diffMonths = (d2.getFullYear() - d1.getFullYear()) * 12 + (d2.getMonth() - d1.getMonth());
                     if (diffMonths >= count) return false;
                 }
             }
-        } else {
-            // 不重複的情況
-            return this.getLocalDateStr(d1) === this.getLocalDateStr(d2);
         }
         
         // --- 重複規律檢查 ---
-        if (this.getLocalDateStr(d1) === this.getLocalDateStr(d2)) return true;
-        
-        if (repeatType === 'daily' || repeatType === '每天') {
-            return true;
+        if (repeat === 'none') return checkMatch(d1, d2);
+        if (repeat === 'daily' || repeat === '每天') return d2 >= d1;
+        if (repeat === 'weekly' || repeat === '每週') return d2 >= d1 && d1.getDay() === d2.getDay();
+        if (repeat === 'monthly' || repeat === '每月') return d2 >= d1 && d1.getDate() === d2.getDate();
+
+        if (repeat === 'yearly' || repeat === '每年') {
+            if (calendarType === 'lunar' && typeof Solar !== 'undefined') {
+                // 1. 取得「任務起始日 (d1)」對應的農曆月日
+                const taskLunarInit = Solar.fromYmd(d1.getFullYear(), d1.getMonth() + 1, d1.getDate()).getLunar();
+                const taskLunarMonth = taskLunarInit.getMonth();
+                const taskLunarDay = taskLunarInit.getDay();
+
+                // 2. 取得「目前格子日 (d2)」對應的農曆月日
+                const targetLunar = Solar.fromYmd(d2.getFullYear(), d2.getMonth() + 1, d2.getDate()).getLunar();
+                
+                // 檢查農曆當天是否匹配
+                if (targetLunar.getMonth() === taskLunarMonth && targetLunar.getDay() === taskLunarDay) return true;
+                
+                // 檢查提前提醒
+                if (reminderDays > 0) {
+                    // 找到當年「農曆任務日」對應的國曆日期
+                    const s = Lunar.fromYmd(d2.getFullYear(), taskLunarMonth, taskLunarDay).getSolar();
+                    const taskSolarDate = new Date(s.getYear(), s.getMonth() - 1, s.getDay());
+                    return checkMatch(taskSolarDate, d2);
+                }
+            } else {
+                const taskSolarDateInTargetYear = new Date(d2.getFullYear(), d1.getMonth(), d1.getDate());
+                return checkMatch(taskSolarDateInTargetYear, d2);
+            }
         }
-        
-        if (repeatType === 'weekly' || repeatType === '每週') {
-            return d1.getDay() === d2.getDay();
-        }
-        
-        if (repeatType === 'monthly' || repeatType === '每月') {
-            return d1.getDate() === d2.getDate();
-        }
-        
         return false;
     }
 
@@ -930,6 +1175,15 @@ class DailyDashboard {
         const parts = s.replace(/\//g, '-').split('-');
         if (parts.length === 3) return new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
         return new Date(s);
+    }
+
+    // 輔助函式：將物件的所有 Key 轉為小寫
+    lowercaseKeys(obj) {
+        const keyValues = Object.keys(obj).map(key => {
+            const newKey = key.toLowerCase();
+            return { [newKey]: obj[key] };
+        });
+        return Object.assign({}, ...keyValues);
     }
 }
 const app = new DailyDashboard();

@@ -1,24 +1,31 @@
 # ----------------------------------------------------
-# 晨間儀表板 .gitignore
+# 小周家族行事曆 .gitignore
 # ----------------------------------------------------
 
-# 敏感資訊設定檔 (內含 API 網址與金鑰)
+# 1. 核心敏感資訊 (內含 Google Apps Script API 網址與金鑰)
+# 絕對不可上傳到 GitHub，否則任何人都能存取您的 Google Sheet
 config.js
 
-# 資料備份或本地測試資料
+# 2. 本地測試或個人備份資料
+# 若您在 data.js 裡寫了真實家人的名字或行程，請保持忽略
 data.js
-*.pyc
-__pycache__/
+*.json
+!config.example.js
 
-# 系統檔案
+# 3. 系統與編輯器暫存檔
 .DS_Store
 Thumbs.db
-
-# 編輯器/IDE 相關
+desktop.ini
 .vscode/
 .idea/
 *.swp
 *.bak
+*.tmp
+*.log
 
-# 相依套件 (若後續改為 npm 專案)
+# 4. 相依套件 (若後續改為 npm 專案)
 node_modules/
+dist/
+.env
+.env.local
+.env.*.local

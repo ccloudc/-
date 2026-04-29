@@ -226,10 +226,16 @@ header {
 }
 
 .lunar-day {
-    font-size: 0.7rem;
-    font-weight: 400;
-    opacity: 0.6;
+    font-size: 0.62rem;
+    font-weight: 500;
+    opacity: 0.8;
     color: var(--text-secondary);
+    writing-mode: vertical-rl;
+    text-orientation: upright;
+    letter-spacing: -2px;
+    line-height: 1;
+    margin-left: 3px;
+    display: inline-block;
 }
 
 .holiday-label {
@@ -612,20 +618,61 @@ header {
     margin-bottom: 20px;
 }
 
+.reminder-highlight-banner {
+    grid-column: 1 / -1;
+    background: rgba(255, 193, 7, 0.15);
+    border-left: 4px solid #ffc107;
+    padding: 8px 12px;
+    margin-bottom: 10px;
+    border-radius: 4px;
+    color: #856404;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
 .modal-task-row {
     display: grid;
-    grid-template-columns: minmax(100px, 1.2fr) minmax(120px, 2fr) minmax(120px, 1.5fr);
+    grid-template-columns: 1fr 2fr 1fr;
     grid-template-areas: 
         "area1 area2 area3"
+        "area_options area_options area_options"
         "area4 area4 area5";
-    gap: 15px; /* 從 20px 略微縮減 */
+    gap: 12px;
     background: white;
-    padding: 20px;
+    padding: 18px;
     border-radius: 20px;
     border: 1px solid #eef0f2;
     position: relative;
     margin-bottom: 20px;
 }
+
+.task-options-row {
+    grid-area: area_options;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    background: #f8f9fa;
+    padding: 10px;
+    border-radius: 12px;
+    margin-bottom: 5px;
+}
+
+.task-options-row .form-group {
+    margin-bottom: 0;
+    flex: 1;
+    min-width: 120px;
+}
+
+.reminder-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    background: #fff8e1;
+    padding: 10px;
+    border-radius: 12px;
+    grid-column: span 3;
+}
+
 
 /* 通用的 Grid 區塊對應 */
 .modal-task-row .field-1 { grid-area: area1; }
@@ -727,15 +774,59 @@ header {
 .btn-danger { background: #ff7675; color: white; }
 .btn-danger:hover { opacity: 0.9; transform: translateY(-2px); }
 
-/* 生日編輯排版 */
-.birthday-inputs-row {
-    display: flex;
-    gap: 15px;
-    width: 100%;
+/* 生日管理清單樣式 */
+.manage-list {
+    max-height: 400px;
+    overflow-y: auto;
+    margin-top: 15px;
 }
-.birth-year-field { flex: 2; }
-.birth-month-field { flex: 1; }
-.birth-day-field { flex: 1; }
+
+.manage-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 15px;
+    background: white;
+    border-bottom: 1px solid #eee;
+    transition: background 0.2s;
+}
+
+.manage-item:hover {
+    background: #f8f9fa;
+}
+
+.manage-item-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.manage-item-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.btn-small {
+    padding: 5px 10px;
+    font-size: 0.8rem;
+    border-radius: 6px;
+    cursor: pointer;
+    border: 1px solid #ddd;
+    background: white;
+}
+
+.btn-small:hover {
+    background: #eee;
+}
+
+.reminder-tag {
+    font-size: 0.7rem;
+    background: #ffeaa7;
+    color: #d35400;
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-weight: 700;
+    margin-left: 5px;
+}
 
 @media (max-width: 500px) {
     .birthday-inputs-row {
