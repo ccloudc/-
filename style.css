@@ -119,6 +119,8 @@ header {
     font-weight: 800;
     font-size: 1rem;
     color: var(--text-primary);
+    flex: 1; /* 讓日期數字佔據剩餘空間，推擠農曆到右側 */
+    text-align: left;
 }
 
 .label-container {
@@ -212,10 +214,11 @@ header {
 
 .day-header {
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-start; /* 改為靠左對齊，配合 flex:1 達到推擠效果 */
     align-items: center;
     width: 100%;
     margin-bottom: 4px;
+    gap: 2px; /* 使用小 gap 控制間距 */
 }
 
 .day.today {
@@ -234,8 +237,10 @@ header {
     text-orientation: upright;
     letter-spacing: -2px;
     line-height: 1;
-    margin-left: 3px;
     display: inline-block;
+    flex-shrink: 0; /* 防止被擠壓 */
+    min-width: 0.7rem; /* 確保寬度足夠顯示垂直文字 */
+    text-align: center;
 }
 
 .holiday-label {
